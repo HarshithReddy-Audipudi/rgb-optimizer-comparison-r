@@ -1,0 +1,6 @@
+"0","# Combine results"
+"0","summary_df <- data.frame("
+"0","  Method = names(results_tree),"
+"0","  Final_Loss = sapply(results_tree, function(res) res$value)"
+"0",")"
+"0","print(summary_df)"

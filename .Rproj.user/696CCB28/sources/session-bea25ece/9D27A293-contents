@@ -1,0 +1,122 @@
+---
+title: "Project 1 - Part A: Label Aggregation"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(EBImage)
+```
+
+```{r}
+
+annotation <- read.csv("../data/Annotation.csv", stringsAsFactors = FALSE)
+head(annotation)
+```
+
+```{r}
+img_paths <- list.files("../data/ProjectData_ForClass_v2-3", 
+                        pattern = "*.jpg", 
+                        recursive = TRUE, 
+                        full.names = TRUE)
+length(img_paths)
+```
+
+```{r}
+extract_features <- function(image_path) {
+  img <- tryCatch({
+    readImage(image_path)
+  }, error = function(e) return(NULL))
+
+  if (is.null(img)) return(rep(NA, 3))
+
+  img_resized <- resize(img, 32, 32)  
+  r <- mean(channel(img_resized, "red"))
+  g <- mean(channel(img_resized, "green"))
+  b <- mean(channel(img_resized, "blue"))
+  return(c(r, g, b))
+}
+```
+
+```{r}
+annotation$Panel <- as.character(annotation$Panel)
+annotation$image_path <- sapply(annotation$Panel, function(panel) {
+  match <- grep(panel, img_paths, value = TRUE)
+  if (length(match) > 0) return(match[1]) else return(NA)
+})
+annotation_filtered <- annotation[!is.na(annotation$image_path), ]
+nrow(annotation_filtered) 
+```
+
+```{r}
+features_matrix <- t(sapply(annotation_filtered$image_path, extract_features))
+features_df <- data.frame(Index = annotation_filtered$Index,
+                          Panel = annotation_filtered$Panel,
+                          features_matrix)
+colnames(features_df)[3:5] <- c("R_mean", "G_mean", "B_mean")
+head(features_df)
+```
+
+```{r}
+annotation$image_path <- sapply(annotation$Panel, function(panel) {
+ 
+  parts <- strsplit(panel, "_")[[1]]
+  scroll_num <- gsub("^0+", "", parts[2])  # remove leading 0s
+  file_num <- gsub("^0+", "", parts[4])
+  filename <- paste0("s", scroll_num, ".jpg")
+  
+
+  match <- grep(filename, img_paths, value = TRUE)
+  if (length(match) > 0) return(match[1]) else return(NA)
+})
+```
+
+```{r}
+annotation_filtered <- annotation[!is.na(annotation$image_path), ]
+nrow(annotation_filtered)
+```
+
+```{r}
+library(EBImage)
+
+extract_features <- function(image_path) {
+  img <- tryCatch({
+    readImage(image_path)
+  }, error = function(e) return(NULL))
+  
+  if (is.null(img)) return(rep(NA, 3))
+  
+  img_resized <- resize(img, 32, 32)
+  r <- mean(channel(img_resized, "red"))
+  g <- mean(channel(img_resized, "green"))
+  b <- mean(channel(img_resized, "blue"))
+  
+  return(c(r, g, b))
+}
+```
+
+```{r}
+features_matrix <- t(sapply(annotation_filtered$image_path, extract_features))
+```
+
+```{r}
+features_df <- data.frame(
+  Index = annotation_filtered$Index,
+  Panel = annotation_filtered$Panel,
+  features_matrix
+)
+colnames(features_df)[3:5] <- c("R_mean", "G_mean", "B_mean")
+```
+
+```{r}
+save(features_df, file = "/Users/harshithharsha/MY DOCS/ML-OPTIMIZATION/All-OPT-Projects/data/features.RData")
+```
+
+

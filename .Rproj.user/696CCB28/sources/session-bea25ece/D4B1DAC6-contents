@@ -1,0 +1,188 @@
+---
+title: "Project 2"
+output: html_notebook
+---
+
+
+
+```{r}
+load("../data/datasets.RData") 
+
+str(tree_data)
+length(tree_labels)
+```
+
+```{r}
+install.packages("optimx")
+```
+
+```{r}
+library(optimx)
+
+
+compute_loss <- function(X, y, theta, loss_type) {
+  scores <- X %*% theta
+  probs <- 1 / (1 + exp(-scores))
+  eps <- 1e-6
+  
+  if (loss_type == "logistic") {
+    return(mean(log(1 + exp(-y * scores))))
+  } else if (loss_type == "cross-entropy") {
+    return(-mean(y * log(probs + eps) + (1 - y) * log(1 - probs + eps)))
+  }
+}
+
+
+train_optimx <- function(X, y, method = "BFGS", loss_type = "logistic") {
+  X <- as.matrix(X)
+  y <- as.numeric(y)
+  theta_init <- rep(0, ncol(X))
+  
+
+  loss_fn <- function(theta) {
+    compute_loss(X, y, theta, loss_type)
+  }
+  
+  result <- optimx(par = theta_init, fn = loss_fn, method = method)
+  return(result)
+}
+```
+
+```{r}
+result_bfgs <- train_optimx(tree_data, tree_labels, method = "BFGS", loss_type = "logistic")
+print(result_bfgs)
+```
+
+```{r}
+methods <- c("BFGS", "L-BFGS-B", "CG", "Nelder-Mead")
+
+results_tree <- lapply(methods, function(m) {
+  cat("Training Tree label with", m, "...\n")
+  train_optimx(tree_data, tree_labels, method = m, loss_type = "logistic")
+})
+names(results_tree) <- methods
+```
+
+```{r}
+sapply(results_tree, function(res) res$value)
+```
+
+```{r}
+
+final_losses <- sapply(results_tree, function(res) res$value)
+print(final_losses)
+```
+
+```{r}
+run_optim_with_tracking <- function(X, y, method = "BFGS", loss_type = "logistic") {
+  X <- as.matrix(X)
+  y <- as.numeric(y)
+  theta <- rep(0, ncol(X))
+  loss_values <- numeric(100)
+
+  for (i in 1:100) {
+    res <- optimx::optimx(par = theta, fn = function(th) compute_loss(X, y, th, loss_type),
+                          method = method, control = list(maxit = 1))
+    theta <- as.numeric(res[1, 1:ncol(X)])  # update theta
+    loss_values[i] <- res$value
+  }
+
+  return(loss_values)
+}
+
+loss_bfgs <- run_optim_with_tracking(tree_data, tree_labels, method = "BFGS")
+```
+
+```{r}
+plot(loss_bfgs, type = "l", col = "blue", lwd = 2,
+     main = "Loss Curve - BFGS", xlab = "Iteration", ylab = "Loss")
+```
+
+```{r}
+run_optim_with_tracking <- function(X, y, method = "BFGS", loss_type = "logistic", steps = 100) {
+  X <- as.matrix(X)
+  y <- as.numeric(y)
+  theta <- rep(0, ncol(X))
+  loss_values <- numeric(steps)
+  
+  for (i in 1:steps) {
+    res <- optimx::optimx(
+      par = theta,
+      fn = function(th) compute_loss(X, y, th, loss_type),
+      method = method,
+      control = list(maxit = 1)
+    )
+    theta <- as.numeric(res[1, 1:ncol(X)])
+    loss_values[i] <- res$value
+  }
+  
+  return(loss_values)
+}
+```
+
+```{r}
+loss_bfgs        <- run_optim_with_tracking(tree_data, tree_labels, method = "BFGS")
+loss_lbfgsb      <- run_optim_with_tracking(tree_data, tree_labels, method = "L-BFGS-B")
+loss_cg          <- run_optim_with_tracking(tree_data, tree_labels, method = "CG")
+loss_neldermead  <- run_optim_with_tracking(tree_data, tree_labels, method = "Nelder-Mead")
+```
+
+```{r}
+plot(loss_bfgs, type = "l", col = "blue", lwd = 2,
+     xlab = "Iteration", ylab = "Loss", main = "Optimizer Loss Comparison", ylim = range(c(loss_bfgs, loss_lbfgsb, loss_cg, loss_neldermead)))
+lines(loss_lbfgsb, col = "red", lwd = 2)
+lines(loss_cg, col = "green", lwd = 2)
+lines(loss_neldermead, col = "purple", lwd = 2)
+
+legend("topright", legend = c("BFGS", "L-BFGS-B", "CG", "Nelder-Mead"),
+       col = c("blue", "red", "green", "purple"), lwd = 2)
+```
+
+```{r}
+loss_bfgs_myth       <- run_optim_with_tracking(myth_data, myth_labels, method = "BFGS")
+loss_lbfgsb_myth     <- run_optim_with_tracking(myth_data, myth_labels, method = "L-BFGS-B")
+loss_cg_myth         <- run_optim_with_tracking(myth_data, myth_labels, method = "CG")
+loss_neldermead_myth <- run_optim_with_tracking(myth_data, myth_labels, method = "Nelder-Mead")
+```
+
+```{r}
+plot(loss_bfgs_myth, type = "l", col = "blue", lwd = 2,
+     xlab = "Iteration", ylab = "Loss", main = "Mythology - Optimizer Loss Comparison", 
+     ylim = range(c(loss_bfgs_myth, loss_lbfgsb_myth, loss_cg_myth, loss_neldermead_myth)))
+lines(loss_lbfgsb_myth, col = "red", lwd = 2)
+lines(loss_cg_myth, col = "green", lwd = 2)
+lines(loss_neldermead_myth, col = "purple", lwd = 2)
+
+legend("topright", legend = c("BFGS", "L-BFGS-B", "CG", "Nelder-Mead"),
+       col = c("blue", "red", "green", "purple"), lwd = 2)
+```
+
+```{r}
+loss_bfgs_animal       <- run_optim_with_tracking(animal_data, animal_labels, method = "BFGS")
+loss_lbfgsb_animal     <- run_optim_with_tracking(animal_data, animal_labels, method = "L-BFGS-B")
+loss_cg_animal         <- run_optim_with_tracking(animal_data, animal_labels, method = "CG")
+loss_neldermead_animal <- run_optim_with_tracking(animal_data, animal_labels, method = "Nelder-Mead")
+```
+
+```{r}
+plot(loss_bfgs_animal, type = "l", col = "blue", lwd = 2,
+     xlab = "Iteration", ylab = "Loss", main = "Animal - Optimizer Loss Comparison", 
+     ylim = range(c(loss_bfgs_animal, loss_lbfgsb_animal, loss_cg_animal, loss_neldermead_animal)))
+lines(loss_lbfgsb_animal, col = "red", lwd = 2)
+lines(loss_cg_animal, col = "green", lwd = 2)
+lines(loss_neldermead_animal, col = "purple", lwd = 2)
+
+legend("topright", legend = c("BFGS", "L-BFGS-B", "CG", "Nelder-Mead"),
+       col = c("blue", "red", "green", "purple"), lwd = 2)
+```
+
+```{r}
+
+summary_df <- data.frame(
+  Method = names(results_tree),
+  Final_Loss = sapply(results_tree, function(res) res$value)
+)
+print(summary_df)
+```
+
+

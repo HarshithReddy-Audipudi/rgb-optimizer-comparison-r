@@ -1,0 +1,3 @@
+"0","compute_accuracy <- function(y_true, y_pred) {"
+"0","  mean(y_true == y_pred)"
+"0","}"

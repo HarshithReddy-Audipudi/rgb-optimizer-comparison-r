@@ -1,0 +1,7 @@
+"0","features_matrix <- t(sapply(annotation_filtered$image_path, extract_features))"
+"0","features_df <- data.frame(Index = annotation_filtered$Index,"
+"0","                          Panel = annotation_filtered$Panel,"
+"0","                          features_matrix)"
+"2","Error in data.frame(Index = annotation_filtered$Index, Panel = annotation_filtered$Panel,  : 
+  arguments imply differing number of rows: 0, 1
+"

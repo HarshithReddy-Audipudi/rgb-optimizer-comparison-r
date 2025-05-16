@@ -1,0 +1,5 @@
+"0","predict_labels <- function(model, X) {"
+"0","  probs <- 1 / (1 + exp(-X %*% model$theta)) "
+"0","  preds <- ifelse(probs >= 0.5, 1, 0)         "
+"0","  return(preds)"
+"0","}"

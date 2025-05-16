@@ -1,0 +1,224 @@
+---
+title: "Project 1 - Part B"
+output: html_notebook
+---
+
+
+
+```{r}
+load("../data/features.RData")   
+head(features_df)
+```
+
+```{r}
+
+annotation <- read.csv("../data/Annotation.csv", stringsAsFactors = FALSE)
+
+
+annotation$Tree <- as.numeric(annotation$Tree)
+annotation$Animal <- as.numeric(annotation$Animal)
+annotation$Mythological <- as.numeric(annotation$Mythological)
+
+
+merged_df <- merge(features_df, annotation, by.x = "Panel", by.y = "Panel")
+
+
+head(merged_df)
+```
+
+```{r}
+
+annotation <- read.csv("../data/Annotation.csv", stringsAsFactors = FALSE)
+
+
+labels_df <- annotation[, c("Index", "Panel", "Tree", "Animal", "Mythological.Character")]
+colnames(labels_df) <- c("Index", "Panel", "Tree_Label", "Animal_Label", "Mythology_Label")
+
+
+labels_df <- na.omit(labels_df)
+head(labels_df)
+```
+
+```{r}
+merged_df <- merge(features_df, labels_df, by = c("Index", "Panel"))
+save(merged_df, file = "../data/merged_features_labels.RData")
+```
+
+```{r}
+
+load("../data/merged_features_labels.RData")
+
+
+str(merged_df)
+
+
+tree_data <- merged_df[, c("R_mean", "G_mean", "B_mean")]
+tree_labels <- merged_df$Tree_Label
+
+animal_data <- merged_df[, c("R_mean", "G_mean", "B_mean")]
+animal_labels <- merged_df$Animal_Label
+
+myth_data <- merged_df[, c("R_mean", "G_mean", "B_mean")]
+myth_labels <- merged_df$Mythology_Label
+
+
+save(tree_data, tree_labels, animal_data, animal_labels, myth_data, myth_labels,
+     file = "../data/datasets.RData")
+
+# Preview
+table(tree_labels)
+table(animal_labels)
+table(myth_labels)
+```
+
+```{r}
+
+train_sgd <- function(X, y, loss_type = "logistic", lr = 0.01, epochs = 100) {
+  n <- nrow(X)
+  p <- ncol(X)
+  theta <- rep(0, p)
+  loss_history <- numeric(epochs)
+  
+  for (epoch in 1:epochs) {
+    for (i in 1:n) {
+      xi <- X[i, , drop = FALSE]
+      yi <- y[i]
+      score <- as.numeric(xi %*% theta)
+      
+      if (loss_type == "logistic") {
+        grad <- as.numeric(-yi * xi / (1 + exp(yi * score)))
+      } else if (loss_type == "cross-entropy") {
+        prob <- 1 / (1 + exp(-score))
+        grad <- as.numeric((prob - yi) * xi)
+      }
+      
+      theta <- theta - lr * grad
+    }
+    
+  
+    probs <- 1 / (1 + exp(-X %*% theta))
+    if (loss_type == "logistic") {
+      loss_history[epoch] <- mean(log(1 + exp(-y * (X %*% theta))))
+    } else if (loss_type == "cross-entropy") {
+      eps <- 1e-6
+      loss_history[epoch] <- -mean(y * log(probs + eps) + (1 - y) * log(1 - probs + eps))
+    }
+  }
+  
+  list(theta = theta, loss_history = loss_history)
+}
+```
+
+```{r}
+
+X_tree <- as.matrix(tree_data)
+y_tree <- as.numeric(tree_labels)
+
+X_animal <- as.matrix(animal_data)
+y_animal <- as.numeric(animal_labels)
+
+X_myth <- as.matrix(myth_data)
+y_myth <- as.numeric(myth_labels)
+```
+
+```{r}
+
+X_tree <- as.matrix(tree_data)
+y_tree <- as.numeric(tree_labels)
+
+X_animal <- as.matrix(animal_data)
+y_animal <- as.numeric(animal_labels)
+
+X_myth <- as.matrix(myth_data)
+y_myth <- as.numeric(myth_labels)
+```
+
+```{r}
+dim(X_tree)     
+length(y_tree)  
+```
+
+```{r}
+
+sgd_tree_logistic <- train_sgd(X_tree, y_tree, loss_type = "logistic")
+sgd_tree_entropy  <- train_sgd(X_tree, y_tree, loss_type = "cross-entropy")
+
+sgd_animal_logistic <- train_sgd(X_animal, y_animal, loss_type = "logistic")
+sgd_animal_entropy  <- train_sgd(X_animal, y_animal, loss_type = "cross-entropy")
+
+sgd_myth_logistic <- train_sgd(X_myth, y_myth, loss_type = "logistic")
+sgd_myth_entropy  <- train_sgd(X_myth, y_myth, loss_type = "cross-entropy")
+```
+
+```{r}
+library(ggplot2)
+
+plot_loss_curve <- function(model, title) {
+  loss_df <- data.frame(
+    Iteration = seq_along(model$loss_history),
+    Loss = model$loss_history
+  )
+  
+  ggplot(loss_df, aes(x = Iteration, y = Loss)) +
+    geom_line(color = "steelblue", linewidth = 1) +
+    ggtitle(title) +
+    theme_minimal()
+}
+```
+
+```{r}
+
+plot_loss_curve(sgd_tree_logistic, "Tree - Logistic Loss")
+plot_loss_curve(sgd_tree_entropy, "Tree - Cross-Entropy Loss")
+
+plot_loss_curve(sgd_animal_logistic, "Animal - Logistic Loss")
+plot_loss_curve(sgd_animal_entropy, "Animal - Cross-Entropy Loss")
+
+plot_loss_curve(sgd_myth_logistic, "Mythology - Logistic Loss")
+plot_loss_curve(sgd_myth_entropy, "Mythology - Cross-Entropy Loss")
+```
+
+```{r}
+predict_labels <- function(model, X) {
+  probs <- 1 / (1 + exp(-X %*% model$theta)) 
+  preds <- ifelse(probs >= 0.5, 1, 0)         
+  return(preds)
+}
+```
+
+```{r}
+compute_accuracy <- function(y_true, y_pred) {
+  mean(y_true == y_pred)
+}
+```
+
+```{r}
+# Tree
+tree_preds_log <- predict_labels(sgd_tree_logistic, X_tree)
+tree_preds_entropy <- predict_labels(sgd_tree_entropy, X_tree)
+
+cat("Tree Accuracy (Logistic):", compute_accuracy(y_tree, tree_preds_log), "\n")
+cat("Tree Accuracy (Cross-Entropy):", compute_accuracy(y_tree, tree_preds_entropy), "\n")
+
+# Animal
+animal_preds_log <- predict_labels(sgd_animal_logistic, X_animal)
+animal_preds_entropy <- predict_labels(sgd_animal_entropy, X_animal)
+
+cat("Animal Accuracy (Logistic):", compute_accuracy(y_animal, animal_preds_log), "\n")
+cat("Animal Accuracy (Cross-Entropy):", compute_accuracy(y_animal, animal_preds_entropy), "\n")
+
+# Mythology
+myth_preds_log <- predict_labels(sgd_myth_logistic, X_myth)
+myth_preds_entropy <- predict_labels(sgd_myth_entropy, X_myth)
+
+cat("Mythology Accuracy (Logistic):", compute_accuracy(y_myth, myth_preds_log), "\n")
+cat("Mythology Accuracy (Cross-Entropy):", compute_accuracy(y_myth, myth_preds_entropy), "\n")
+```
+
+```{r}
+save(sgd_tree_logistic, sgd_tree_entropy,
+     sgd_animal_logistic, sgd_animal_entropy,
+     sgd_myth_logistic, sgd_myth_entropy,
+     file = "../data/sgd_models.RData")
+```
+

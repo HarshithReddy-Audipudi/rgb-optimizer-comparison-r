@@ -1,0 +1,3 @@
+"0","plot(loss_bfgs_myth, type = ""l"", col = ""blue"", lwd = 2,"
+"0","     xlab = ""Iteration"", ylab = ""Loss"", main = ""Mythology - Optimizer Loss Comparison"", "
+"0","     ylim = range(c(loss_bfgs_myth, loss_lbfgsb_myth, loss_cg_myth, loss_neldermead_myth)))"

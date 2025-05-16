@@ -1,0 +1,1 @@
+"0","features_matrix <- t(sapply(annotation_filtered$image_path, extract_features))"

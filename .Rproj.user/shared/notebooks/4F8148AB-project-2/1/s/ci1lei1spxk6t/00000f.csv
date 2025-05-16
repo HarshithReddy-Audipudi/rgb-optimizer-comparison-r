@@ -1,0 +1,2 @@
+"0","plot(loss_bfgs, type = ""l"", col = ""blue"", lwd = 2,"
+"0","     main = ""Loss Curve - BFGS"", xlab = ""Iteration"", ylab = ""Loss"")"

@@ -1,0 +1,6 @@
+"0","features_df <- data.frame("
+"0","  Index = annotation_filtered$Index,"
+"0","  Panel = annotation_filtered$Panel,"
+"0","  features_matrix"
+"0",")"
+"0","colnames(features_df)[3:5] <- c(""R_mean"", ""G_mean"", ""B_mean"")"

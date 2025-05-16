@@ -1,0 +1,4 @@
+"0","save(sgd_tree_logistic, sgd_tree_entropy,"
+"0","     sgd_animal_logistic, sgd_animal_entropy,"
+"0","     sgd_myth_logistic, sgd_myth_entropy,"
+"0","     file = ""../data/sgd_models.RData"")"

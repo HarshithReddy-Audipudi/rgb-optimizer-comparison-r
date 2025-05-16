@@ -1,0 +1,4 @@
+"0","result_bfgs <- train_optimx(tree_data, tree_labels, method = ""BFGS"", loss_type = ""logistic"")"
+"2","Warning: no non-missing arguments to max; returning -Inf"
+"2","Warning: no non-missing arguments to min; returning Inf"
+"0","print(result_bfgs)"

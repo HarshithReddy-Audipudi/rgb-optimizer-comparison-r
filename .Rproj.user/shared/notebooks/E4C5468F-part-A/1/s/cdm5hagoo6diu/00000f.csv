@@ -1,0 +1,6 @@
+"0","annotation_filtered <- annotation[!is.na(annotation$image_path), ]"
+"0","nrow(annotation_filtered)"
+"1","[1]"
+"1"," 124"
+"1","
+"

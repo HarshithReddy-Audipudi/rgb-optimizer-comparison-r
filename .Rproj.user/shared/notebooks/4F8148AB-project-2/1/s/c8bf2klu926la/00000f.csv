@@ -1,0 +1,3 @@
+"0","plot(loss_bfgs_animal, type = ""l"", col = ""blue"", lwd = 2,"
+"0","     xlab = ""Iteration"", ylab = ""Loss"", main = ""Animal - Optimizer Loss Comparison"", "
+"0","     ylim = range(c(loss_bfgs_animal, loss_lbfgsb_animal, loss_cg_animal, loss_neldermead_animal)))"
